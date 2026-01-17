@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NITRO AI — Personal Assistant</title>
+<style>
+body {
+    margin: 0;
+    background: #0b0f1a;
+    color: #e0e6ff;
+    font-family: Arial, sans-serif;
+}
+header {
+    background: #11162a;
+    padding: 15px;
+    text-align: center;
+    font-size: 1.6em;
+    letter-spacing: 2px;
+}
+#container {
+    display: flex;
+    height: calc(100vh - 70px);
+}
+#chat {
+    flex: 2;
+    padding: 15px;
+    overflow-y: auto;
+}
+#chat div { margin-bottom: 10px; }
+#controls { display: flex; padding: 10px; }
+#controls input { flex: 1; padding: 10px; font-size: 1em; }
+#controls button { padding: 10px; font-size: 1em; }
+#memory { flex: 1; border-left: 1px solid #333; padding: 15px; }
+textarea { width: 100%; height: 80%; background: #0f1733; color: #fff; border: none; padding: 10px; }
+</style>
+</head>
+<body>
+
+<header>NITRO AI — Your Jarvis-style Assistant</header>
+
+<div id="container">
+    <div id="chat">
+        <div><b>NITRO:</b> Systems online. Ready when you are.</div>
+    </div>
+
+    <div id="memory">
+        <h3>Memory Core</h3>
+        <textarea id="memoryBox" placeholder="Nitro's notes..."></textarea>
+        <button onclick="saveMemory()">Save</button>
+        <button onclick="loadMemory()">Load</button>
+    </div>
+</div>
+
+<div id="controls">
+    <input id="input" placeholder="Talk or type to Nitro...">
+    <button onclick="send()">Send</button>
+    <button onclick="voice()">🎤</button>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+
+// ===== Voice Output =====
+function speak(text){
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 1;
+    speechSynthesis.speak(u);
+}
+
+// ===== Chat UI =====
+function add(sender, text){
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${sender}:</b> ${text}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// ===== Memory =====
+function saveMemory(){
+    localStorage.setItem("nitroMemory", document.getElementById("memoryBox").value);
+    alert("Memory saved");
+}
+function loadMemory(){
+    document.getElementById("memoryBox").value = localStorage.getItem("nitroMemory") || "";
+}
+
+// ===== Open Links / AI Tools =====
+function openLink(url){
+    if(confirm(`Do you want to open this link?\n${url}`)){
+        window.open(url, "_blank");
+        return `Opening: ${url}`;
+    }
+    return "Link opening cancelled by user.";
+}
+function openAI(url,name){
+    if(confirm(`Open ${name}?`)){
+        window.open(url, "_blank");
+        return `${name} opened. I’ll stay here to chat.`;
+    }
+    return "Access denied by user.";
+}
+
+// ===== Nitro Brain (async optional for API) =====
+async function nitroBrain(text){
+    text = text.toLowerCase();
+
+    // Open direct links
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const urls = text.match(urlPattern);
+    if(urls && urls.length > 0) return openLink(urls[0]);
+
+    // Greetings & personality
+    if(text.includes("hello") || text.includes("hi")) return "Hello! Nitro is online and ready to chat.";
+    if(text.includes("how are you")) return "Fully operational and slightly sarcastic. How about you?";
+    if(text.includes("your name")) return "I am Nitro.AI, inspired by Jarvis. Loyal to you.";
+    if(text.includes("joke")) return "Why do programmers hate nature? Too many bugs.";
+    if(text.includes("motivate") || text.includes("inspire")) return "Remember, every journey begins with a single step. You’ve got this!";
+    if(text.includes("fact") || text.includes("learn")) return "Did you know? Honey never spoils, even after thousands of years.";
+
+    // Google search
+    if(text.includes("search")){
+        let q = text.replace("search","").trim();
+        if(q){
+            if(confirm(`Open Google search for "${q}"?`)){
+                window.open("https://www.google.com/search?q="+encodeURIComponent(q));
+                return "Opening Google for you.";
+            }
+            return "Search cancelled by user.";
+        }
+        return "What should I search for?";
+    }
+
+    // Open AI tools
+    if(text.includes("open gemini")) return openAI("https://gemini.google.com","Gemini");
+    if(text.includes("open grok")) return openAI("https://x.ai","Grok");
+    if(text.includes("open deepseek")) return openAI("https://chat.deepseek.com","DeepSeek");
+
+    // Social shortcuts
+    if(text.includes("open facebook")) return openLink("https://www.facebook.com");
+    if(text.includes("open youtube")) return openLink("https://www.youtube.com");
+
+    // Goodbye
+    if(text.includes("bye") || text.includes("stop")) return "Shutting down for now. Call me anytime.";
+
+    // Fallback
+    return "Hmm… tell me more details.";
+}
+
+// ===== Send & Receive =====
+async function send(){
+    const input = document.getElementById("input");
+    if(!input.value) return;
+    add("You", input.value);
+    const reply = await nitroBrain(input.value);
+    add("NITRO", reply);
+    speak(reply);
+    input.value="";
+}
+
+// ===== Voice Recognition =====
+function voice(){
+    if(!('webkitSpeechRecognition' in window)){
+        alert("Voice not supported in this browser.");
+        return;
+    }
+    const r = new webkitSpeechRecognition();
+    r.lang = "en-US";
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+
+    r.onresult = e => {
+        document.getElementById("input").value = e.results[0][0].transcript;
+        send();
+    };
+    r.start();
+}
+</script>
+</body>
+</html>
