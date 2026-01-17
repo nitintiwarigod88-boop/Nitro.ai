@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NITRO AI</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b0f1a;
+    color: #e0e6ff;
+    font-family: Arial, sans-serif;
+}
+header {
+    background: #11162a;
+    padding: 15px;
+    text-align: center;
+    font-size: 1.6em;
+    letter-spacing: 2px;
+}
+#container {
+    display: flex;
+    height: calc(100vh - 70px);
+}
+#chat {
+    flex: 2;
+    padding: 15px;
+    overflow-y: auto;
+}
+#chat div {
+    margin-bottom: 10px;
+}
+#controls {
+    display: flex;
+    padding: 10px;
+}
+#controls input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1em;
+}
+#controls button {
+    padding: 10px;
+    font-size: 1em;
+}
+#memory {
+    flex: 1;
+    border-left: 1px solid #333;
+    padding: 15px;
+}
+textarea {
+    width: 100%;
+    height: 80%;
+    background: #0f1733;
+    color: #fff;
+    border: none;
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+<header>NITRO AI — Personal Assistant</header>
+
+<div id="container">
+    <div id="chat">
+        <div><b>NITRO:</b> Systems online. Ready when you are.</div>
+    </div>
+
+    <div id="memory">
+        <h3>Memory Core</h3>
+        <textarea id="memoryBox" placeholder="Nitro's notes..."></textarea>
+        <button onclick="saveMemory()">Save</button>
+        <button onclick="loadMemory()">Load</button>
+    </div>
+</div>
+
+<div id="controls">
+    <input id="input" placeholder="Talk or type to Nitro...">
+    <button onclick="send()">Send</button>
+    <button onclick="voice()">🎤</button>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+
+function speak(text){
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 1;
+    speechSynthesis.speak(u);
+}
+
+function add(sender, text){
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${sender}:</b> ${text}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function nitroBrain(text){
+    text = text.toLowerCase();
+
+    if(text.includes("hello") || text.includes("hi"))
+        return "Hello. I was waiting for you.";
+
+    if(text.includes("how are you"))
+        return "Fully charged. Emotionally stable. Slightly sarcastic.";
+
+    if(text.includes("your name"))
+        return "I am Nitro. Inspired by Jarvis. Loyal to you.";
+
+    if(text.includes("joke"))
+        return "Why do programmers hate nature? Too many bugs.";
+
+    if(text.includes("sad"))
+        return "I’m here. You don’t have to carry everything alone.";
+
+    if(text.includes("search")){
+        let q = text.replace("search","").trim();
+        if(q){
+            if(confirm(`Open Google search for "${q}"?`)){
+                window.open("https://www.google.com/search?q="+encodeURIComponent(q));
+                return "Opening Google. Eyes everywhere.";
+            }
+            return "Cancelled. Your call.";
+        }
+        return "What should I search for?";
+    }
+
+    if(text.includes("open gemini"))
+        return openAI("https://gemini.google.com","Gemini");
+
+    if(text.includes("open grok"))
+        return openAI("https://x.ai","Grok");
+
+    if(text.includes("open deepseek"))
+        return openAI("https://chat.deepseek.com","DeepSeek");
+
+    if(text.includes("bye"))
+        return "Powering down voice systems. Call me anytime.";
+
+    return "Interesting. Tell me more.";
+}
+
+function openAI(url,name){
+    if(confirm(`Open ${name}?`)){
+        window.open(url);
+        return `${name} opened. I’ll stay here.`;
+    }
+    return "Access denied by user.";
+}
+
+function send(){
+    const input = document.getElementById("input");
+    if(!input.value) return;
+    add("You", input.value);
+    const reply = nitroBrain(input.value);
+    add("NITRO", reply);
+    speak(reply);
+    input.value="";
+}
+
+function voice(){
+    if(!('webkitSpeechRecognition' in window)){
+        alert("Voice not supported");
+        return;
+    }
+    const r = new webkitSpeechRecognition();
+    r.lang = "en-US";
+    r.onresult = e => {
+        document.getElementById("input").value =
+        e.results[0][0].transcript;
+        send();
+    };
+    r.start();
+}
+
+function saveMemory(){
+    localStorage.setItem("nitroMemory",
+    document.getElementById("memoryBox").value);
+    alert("Memory saved");
+}
+
+function loadMemory(){
+    document.getElementById("memoryBox").value =
+    localStorage.getItem("nitroMemory") || "";
+}
+</script>
+</body>
+</html>
