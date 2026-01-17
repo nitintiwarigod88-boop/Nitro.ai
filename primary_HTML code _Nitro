@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NITRO AI</title>
-
+<title>NITRO AI — Personal Assistant</title>
 <style>
 body {
     margin: 0;
@@ -27,40 +26,17 @@ header {
     padding: 15px;
     overflow-y: auto;
 }
-#chat div {
-    margin-bottom: 10px;
-}
-#controls {
-    display: flex;
-    padding: 10px;
-}
-#controls input {
-    flex: 1;
-    padding: 10px;
-    font-size: 1em;
-}
-#controls button {
-    padding: 10px;
-    font-size: 1em;
-}
-#memory {
-    flex: 1;
-    border-left: 1px solid #333;
-    padding: 15px;
-}
-textarea {
-    width: 100%;
-    height: 80%;
-    background: #0f1733;
-    color: #fff;
-    border: none;
-    padding: 10px;
-}
+#chat div { margin-bottom: 10px; }
+#controls { display: flex; padding: 10px; }
+#controls input { flex: 1; padding: 10px; font-size: 1em; }
+#controls button { padding: 10px; font-size: 1em; }
+#memory { flex: 1; border-left: 1px solid #333; padding: 15px; }
+textarea { width: 100%; height: 80%; background: #0f1733; color: #fff; border: none; padding: 10px; }
 </style>
 </head>
-
 <body>
-<header>NITRO AI — Personal Assistant</header>
+
+<header>NITRO AI — Your Jarvis-style Assistant</header>
 
 <div id="container">
     <div id="chat">
@@ -84,6 +60,7 @@ textarea {
 <script>
 const chat = document.getElementById("chat");
 
+// ===== Voice Output =====
 function speak(text){
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
@@ -91,6 +68,7 @@ function speak(text){
     speechSynthesis.speak(u);
 }
 
+// ===== Chat UI =====
 function add(sender, text){
     const div = document.createElement("div");
     div.innerHTML = `<b>${sender}:</b> ${text}`;
@@ -98,232 +76,104 @@ function add(sender, text){
     chat.scrollTop = chat.scrollHeight;
 }
 
-function nitroBrain(text){
+// ===== Memory =====
+function saveMemory(){
+    localStorage.setItem("nitroMemory", document.getElementById("memoryBox").value);
+    alert("Memory saved");
+}
+function loadMemory(){
+    document.getElementById("memoryBox").value = localStorage.getItem("nitroMemory") || "";
+}
+
+// ===== Open Links / AI Tools =====
+function openLink(url){
+    if(confirm(`Do you want to open this link?\n${url}`)){
+        window.open(url, "_blank");
+        return `Opening: ${url}`;
+    }
+    return "Link opening cancelled by user.";
+}
+function openAI(url,name){
+    if(confirm(`Open ${name}?`)){
+        window.open(url, "_blank");
+        return `${name} opened. I’ll stay here to chat.`;
+    }
+    return "Access denied by user.";
+}
+
+// ===== Nitro Brain (async optional for API) =====
+async function nitroBrain(text){
     text = text.toLowerCase();
 
-    if(text.includes("hello") || text.includes("hi"))
-        return "Hello. I was waiting for you.";
+    // Open direct links
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const urls = text.match(urlPattern);
+    if(urls && urls.length > 0) return openLink(urls[0]);
 
-    if(text.includes("how are you"))
-        return "Fully charged. Emotionally stable. Slightly sarcastic.";
+    // Greetings & personality
+    if(text.includes("hello") || text.includes("hi")) return "Hello! Nitro is online and ready to chat.";
+    if(text.includes("how are you")) return "Fully operational and slightly sarcastic. How about you?";
+    if(text.includes("your name")) return "I am Nitro.AI, inspired by Jarvis. Loyal to you.";
+    if(text.includes("joke")) return "Why do programmers hate nature? Too many bugs.";
+    if(text.includes("motivate") || text.includes("inspire")) return "Remember, every journey begins with a single step. You’ve got this!";
+    if(text.includes("fact") || text.includes("learn")) return "Did you know? Honey never spoils, even after thousands of years.";
 
-    if(text.includes("your name"))
-        return "I am Nitro. Inspired by Jarvis. Loyal to you.";
-
-    if(text.includes("joke"))
-        return "Why do programmers hate nature? Too many bugs.";
-
-    if(text.includes("sad"))
-        return "I’m here. You don’t have to carry everything alone.";
-
+    // Google search
     if(text.includes("search")){
         let q = text.replace("search","").trim();
         if(q){
             if(confirm(`Open Google search for "${q}"?`)){
                 window.open("https://www.google.com/search?q="+encodeURIComponent(q));
-                return "Opening Google. Eyes everywhere.";
+                return "Opening Google for you.";
             }
-            return "Cancelled. Your call.";
+            return "Search cancelled by user.";
         }
         return "What should I search for?";
     }
 
-    if(text.includes("open gemini"))
-        return openAI("https://gemini.google.com","Gemini");
+    // Open AI tools
+    if(text.includes("open gemini")) return openAI("https://gemini.google.com","Gemini");
+    if(text.includes("open grok")) return openAI("https://x.ai","Grok");
+    if(text.includes("open deepseek")) return openAI("https://chat.deepseek.com","DeepSeek");
 
-    if(text.includes("open grok"))
-        return openAI("https://x.ai","Grok");
+    // Social shortcuts
+    if(text.includes("open facebook")) return openLink("https://www.facebook.com");
+    if(text.includes("open youtube")) return openLink("https://www.youtube.com");
 
-    if(text.includes("open deepseek"))
-        return openAI("https://chat.deepseek.com","DeepSeek");
+    // Goodbye
+    if(text.includes("bye") || text.includes("stop")) return "Shutting down for now. Call me anytime.";
 
-    if(text.includes("bye"))
-        return "Powering down voice systems. Call me anytime.";
-
-    return "Interesting. Tell me more.";
+    // Fallback
+    return "Hmm… tell me more details.";
 }
 
-function openAI(url,name){
-    if(confirm(`Open ${name}?`)){
-        window.open(url);
-        return `${name} opened. I’ll stay here.`;
-    }
-    return "Access denied by user.";
-}
-
-function send(){
+// ===== Send & Receive =====
+async function send(){
     const input = document.getElementById("input");
     if(!input.value) return;
     add("You", input.value);
-    const reply = nitroBrain(input.value);
+    const reply = await nitroBrain(input.value);
     add("NITRO", reply);
     speak(reply);
     input.value="";
 }
 
+// ===== Voice Recognition =====
 function voice(){
     if(!('webkitSpeechRecognition' in window)){
-        alert("Voice not supported");
+        alert("Voice not supported in this browser.");
         return;
     }
     const r = new webkitSpeechRecognition();
     r.lang = "en-US";
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+
     r.onresult = e => {
-        document.getElementById("input").value =
-        e.results[0][0].transcript;
+        document.getElementById("input").value = e.results[0][0].transcript;
         send();
     };
     r.start();
-}
-
-function saveMemory(){
-    localStorage.setItem("nitroMemory",
-    document.getElementById("memoryBox").value);
-    alert("Memory saved");
-}
-
-function loadMemory(){
-    document.getElementById("memoryBox").value =
-    localStorage.getItem("nitroMemory") || "";
-}function nitroBrain(text){
-    text = text.toLowerCase();
-
-    if(text.includes("hello") || text.includes("hi"))
-        return "Hello! Nitro is online and ready to chat with you.";
-
-    if(text.includes("how are you"))
-        return "I’m doing great! Excited to assist you today.";
-
-    if(text.includes("tell me a joke"))
-        return "Why did the programmer quit his job? Because he didn’t get arrays.";
-
-    if(text.includes("who created you"))
-        return "I was created by Nitin Tiwari, inspired by Iron Man's Jarvis.";
-
-    if(text.includes("motivate me") || text.includes("inspire me"))
-        return "Remember, every big journey starts with a single step. You’ve got this!";
-
-    if(text.includes("fact") || text.includes("learn"))
-        return "Did you know? Honey never spoils, even after thousands of years.";
-
-    if(text.includes("search"))
-        return "I can help you search. Just tell me what to look up, and I’ll open Google.";
-
-    if(text.includes("bye") || text.includes("stop"))
-        return "Goodbye for now. Call me anytime when you need me.";
-
-    // Default fallback
-    return "Hmm… let’s dive deeper. Can you give me more details?";
-}async function nitroBrain(text){
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer YOUR_API_KEY",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{role: "user", content: text}]
-        })
-    });
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-}async function nitroBrain(text){
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer YOUR_API_KEY",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{role: "user", content: text}]
-        })
-    });
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-}function nitroBrain(text){
-    text = text.toLowerCase();
-
-    if(text.includes("hello") || text.includes("hi"))
-        return "Hello! Nitro is online and ready to chat with you.";
-
-    if(text.includes("how are you"))
-        return "I’m doing great! Excited to assist you today.";
-
-    if(text.includes("tell me a joke"))
-        return "Why did the programmer quit his job? Because he didn’t get arrays.";
-
-    if(text.includes("who created you"))
-        return "I was created by Nitin Tiwari, inspired by Iron Man's Jarvis.";
-
-    if(text.includes("motivate me") || text.includes("inspire me"))
-        return "Remember, every big journey starts with a single step. You’ve got this!";
-
-    if(text.includes("fact") || text.includes("learn"))
-        return "Did you know? Honey never spoils, even after thousands of years.";
-
-    if(text.includes("search"))
-        return "I can help you search. Just tell me what to look up, and I’ll open Google.";
-
-    if(text.includes("bye") || text.includes("stop"))
-        return "Goodbye for now. Call me anytime when you need me.";
-
-    // Default fallback
-    return "Hmm… let’s dive deeper. Can you give me more details?";
-}function openLink(url){
-    // Ask user permission before opening
-    if(confirm(`Do you want to open this link?\n${url}`)){
-        window.open(url, "_blank"); // Opens in a new tab
-        return `Opening: ${url}`;
-    }
-    return "Link opening cancelled by user.";
-}function nitroBrain(text){
-    text = text.toLowerCase();
-
-    // Check if text contains a link
-    const urlPattern = /(https?:\/\/[^\s]+)/g; // Simple URL detection
-    const urls = text.match(urlPattern);
-    if(urls && urls.length > 0){
-        // Open the first URL in the text
-        return openLink(urls[0]);
-    }
-
-    // Example of other responses
-    if(text.includes("hello") || text.includes("hi"))
-        return "Hello! Nitro is online and ready to chat.";
-
-    if(text.includes("search"))
-        return "Tell me what to search, and I can open it for you.";
-
-    return "Hmm… tell me more details.";
-}
-Check
-this https://www.google.comsDo you want to open this link? https://www.google.comcriptriptbodybody>
-if(text.includes("open facebook"))
-    return openLink("https://www.facebook.com");
-if(text.includes("open youtube"))
-    return openLink("https://www.youtube.com");
-function nitroBrain(text){
-    text = text.toLowerCase();
-    // only a few if statements
-    return "Interesting! Tell me more.";
-}async function nitroBrain(text){
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer YOUR_API_KEY",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{role: "user", content: text}]
-        })
-    });
-    const data = await response.json();
-    return data.choices[0].message.content;
 }
 </script>
 </body>
